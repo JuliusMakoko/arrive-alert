@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- activity_main strings -->
+    <string name="app_name">ArriveAlert</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_locations">Edit Locations</string>
+    <string name="new_alert">New Alert</string>
+    <string name="new_alert_description">Add new alert button</string>
+    
+    <!--  add_new_***_alert strings -->
+    <string name="new_text_alert">New Text Alert</string>
+    <string name="name_label">Name:</string>
+    <string name="name_hint">ex: Leaving Work</string>
+    <string name="name_description">(Give this alert a meaningful name)</string>
+    <string name="location_label">Location:</string>
+    <string name="location_hint">Use maps button</string>
+    <string name="maps_button_label">Maps</string>
+    <string name="contacts_button_description">Browse contacts</string>
+    <string name="radio_enter_label">When I enter the location</string>
+    <string name="radio_exit_label">When I exit the location</string>
+    <string name="message_hint">ex: I just left work, should be home in about 30 minutes.</string>
+    <string name="button_alert">Create New Alert</string>
+    <string name="to_description">(Who do you want to send this alert to?)</string>
+    <string name="location_description">(Where do you want this alert to trigger?)</string>
+    
+    <!-- add_new_email_alert strings -->
+    <string name="new_email_alert">New Email Alert</string>
+    <string name="email_label">Email:</string>
+    <string name="email_hint">mom@gmail.com</string>
+    <string name="send_email_label">Send Email:</string>
+    <string name="message_email_label">Email message to send:</string>
+    
+    <!-- add_new_text_alert strings -->
+    <string name="phone_label">Phone:</string>
+    <string name="phone_hint">(123)&#8211;456&#8211;7890</string>
+    <string name="send_text_label">Send Text:</string>
+    <string name="message_text_label">Text message to send:</string>
+    
+    <!-- context_menu strings -->
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    
+    <string name="alerts_header">My Alerts</string>
+    <string name="add_alert_button">Add New Alert</string>
+    <string name="radio0">Text</string>
+    <string name="radio1">Email</string>
+    
+
+</resources>
