@@ -7,62 +7,52 @@
 
     <ImageView
         android:id="@+id/icon"
-        android:layout_width="wrap_content"
+        android:layout_width="40dp"
         android:layout_height="fill_parent"
         android:layout_marginRight="5dp"
-        android:contentDescription="alert_icon"
-        android:src="@drawable/ic_launcher" />
+        android:contentDescription="place_icon"
+        android:src="@drawable/ic_action_place_dark" />
 
     <LinearLayout
-        android:layout_width="130dp"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:orientation="vertical" >
 
         <TextView
-            android:id="@+id/title"
+            android:id="@+id/name"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:lines="1"
             android:maxEms="7"
             android:minEms="7"
-            android:text="Example Alert"
+            android:text="Example Location"
             android:textSize="14sp"
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/contact"
+            android:id="@+id/radius"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:lines="1"
             android:maxEms="7"
             android:minEms="7"
-            android:text="Contact"
+            android:text="Radius"
             android:textSize="12sp" />
 
-        <TextView
-            android:id="@+id/status"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:lines="1"
-            android:maxEms="7"
-            android:minEms="7"
-            android:text="Status"
-            android:textSize="12sp" />
     </LinearLayout>
 
     <TextView
-        android:id="@+id/message"
+        android:id="@+id/address"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginLeft="1dp"
         android:ellipsize="end"
         android:fontFamily="Roboto"
-        android:maxLines="3"
-        android:text="Message content"
+        android:maxLines="4"
+        android:text="Address"
         android:textColor="@color/medium_gray"
-        android:textSize="12sp" />
+        android:textSize="14sp" />
 
 </LinearLayout>

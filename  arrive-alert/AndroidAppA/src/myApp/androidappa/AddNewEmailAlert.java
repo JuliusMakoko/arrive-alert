@@ -11,6 +11,7 @@ package myApp.androidappa;
 
 import myApp.database.DatabaseHandler;
 import myApp.list.AlertListItem;
+import myApp.location.EditLocationActivity;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
@@ -29,7 +30,7 @@ public class AddNewEmailAlert extends Activity {
 	private DatabaseHandler db;
 	private EditText alertName;
 	private EditText emailAdd;
-	private EditText location; // location// location
+	private EditText location; // location
 	private EditText message;
 	private RadioButton enterRadio;
 	private RadioButton exitRadio;
@@ -40,13 +41,12 @@ public class AddNewEmailAlert extends Activity {
 		setContentView(R.layout.add_new_email_alert);
 		alertName = (EditText) findViewById(R.id.editText1);
 		emailAdd = (EditText) findViewById(R.id.editTextEmail);
-		location = (EditText) findViewById(R.id.editText3);
+		location = (EditText) findViewById(R.id.editTextLocation);
 		message = (EditText) findViewById(R.id.editText4);
 		enterRadio = (RadioButton) findViewById(R.id.radio0);
 		exitRadio = (RadioButton) findViewById(R.id.radio1);
 		createButton = (Button) findViewById(R.id.button2);
 		db = new DatabaseHandler(this);
-		
 
 		// get data received from calling intent
 		Intent received = getIntent();
@@ -55,15 +55,20 @@ public class AddNewEmailAlert extends Activity {
 		// if alert name is not empty then activity was opened by an Edit intent
 		if (!checkEmpty(alertName.getText().toString())) {
 			emailAdd.setText(received.getStringExtra("CONTACT"));
-			String loc = "" + received.getIntExtra("LOCATION", 0);
-			location.setText(loc);
+
+			int locId = received.getIntExtra("LOCATION", 0);
+			if (db.locationExists(locId))
+				location.setText(db.getLocation(locId).getName());
+			else
+				location.setText("Location not found");
+
 			message.setText(received.getStringExtra("MESSAGE"));
 			if (received.getStringExtra("WHEN").equals("EXIT"))
 				exitRadio.setChecked(true);
 			else
 				enterRadio.setChecked(true);
 			createButton.setText("Update Alert");
-			
+
 			// don't let user modify the name
 			alertName.setEnabled(false);
 		}
@@ -84,6 +89,7 @@ public class AddNewEmailAlert extends Activity {
 			// get user data and convert to Strings
 			String name = alertName.getText().toString();
 			String email = emailAdd.getText().toString();
+			String loc = location.getText().toString();
 			String text = message.getText().toString();
 			String when;
 			if (exitRadio.isChecked())
@@ -113,7 +119,7 @@ public class AddNewEmailAlert extends Activity {
 			intentMessage.putExtra("ICON", Constants.EMAIL);
 			intentMessage.putExtra("MESSAGE", text);
 			intentMessage.putExtra("WHEN", when);
-			intentMessage.putExtra("LOCATION", 4);
+			intentMessage.putExtra("LOCATION", loc);
 
 			setResult(RESULT_OK, intentMessage);
 
@@ -129,13 +135,19 @@ public class AddNewEmailAlert extends Activity {
 			String name = alertName.getText().toString();
 			String email = emailAdd.getText().toString();
 			String text = message.getText().toString();
+			String loc = location.getText().toString();
 			String when;
 			if (exitRadio.isChecked())
 				when = "EXIT";
 			else
 				when = "ENTER";
-			AlertListItem updateMe = new AlertListItem(name, email,
-					Constants.LOCATION, text, when, Constants.EMAIL);
+
+			int locId = -1;
+			if (db.locationExists(loc))
+				locId = db.getLocation(loc).getLocationId();
+
+			AlertListItem updateMe = new AlertListItem(name, email, locId,
+					text, when, Constants.EMAIL);
 
 			if (db.updateAlert(updateMe) == 1) {
 				Toast.makeText(getApplicationContext(),
@@ -159,6 +171,17 @@ public class AddNewEmailAlert extends Activity {
 		String name = alertName.getText().toString();
 		String email = emailAdd.getText().toString();
 		String text = message.getText().toString();
+		String loc = location.getText().toString();
+
+		// if a location by that name doesn't exist -- then return false
+		if (db.locationExists(loc) == false) {
+			Toast.makeText(
+					AddNewEmailAlert.this,
+					"Couldn't find a location by that name."
+							+ " Make sure you've added it to your locations list first.",
+					Toast.LENGTH_LONG).show();
+			return false;
+		}
 
 		// Validate input
 		if (checkEmpty(name)) { // Ensure name field is NOT empty
@@ -196,6 +219,13 @@ public class AddNewEmailAlert extends Activity {
 				Contacts.CONTENT_URI);
 		startActivityForResult(contactPickerIntent,
 				Constants.CONTACT_PICKER_RESULT);
+	}
+
+	// onClick() for the 'Location' button
+	public void locationChooser(View v) {
+		Intent locationIntent = new Intent(this, EditLocationActivity.class);
+		locationIntent.putExtra("TYPE", Constants.LOCATION_PICKER_CALL);
+		startActivityForResult(locationIntent, Constants.LOCATION_PICKER_RESULT);
 	}
 
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -253,10 +283,15 @@ public class AddNewEmailAlert extends Activity {
 					}
 				}
 
-			} else {
-				// gracefully handle failure
-				Log.d(Constants.DEBUG_TAG, "Warning: activity result not ok");
+			} else if (requestCode == Constants.LOCATION_PICKER_RESULT) {
+				String name = data.getStringExtra("NAME");
+				EditText locationEntry = (EditText) findViewById(R.id.editTextLocation);
+				locationEntry.setText(name);
+				Log.d(Constants.DEBUG_TAG, "LOCATION_PICKER_RESULT received - location name = " + name);
 			}
+		} else {
+			// gracefully handle failure
+			Log.d(Constants.DEBUG_TAG, "Warning: activity result not ok");
 		}
 
 	}

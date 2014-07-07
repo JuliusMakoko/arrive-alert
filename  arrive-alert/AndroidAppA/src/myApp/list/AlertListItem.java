@@ -17,6 +17,7 @@ public class AlertListItem {
 	private String when;    // "enter" or "exit"
 	private String message; // the message being sent
 	private int location;   // still unsure how it will be stored
+	private boolean active = false;
 	
 	// Constructors
 	public AlertListItem(){
@@ -24,16 +25,16 @@ public class AlertListItem {
 		this.contact = "contact@email.com";
 		this.message = "Hey mom, I'm leaving school now. See you soon!";
 		this.icon = Constants.EMAIL;
-		this.location = Constants.LOCATION;
+		this.location = Constants.LOCATION; // TODO -- change this
 		this.when = "EXIT";
 	}
 
-	public AlertListItem(String title, int icon, String contact, String message){
-		this.title = title;
-		this.icon = icon;
-		this.contact = contact;
-		this.message = message;
-	}
+//	public AlertListItem(String title, int icon, String contact, String message){
+//		this.title = title;
+//		this.icon = icon;
+//		this.contact = contact;
+//		this.message = message;
+//	}
 	
 	public AlertListItem(String title, int icon, String when, String contact, String message){
 		this.title = title;
@@ -83,8 +84,19 @@ public class AlertListItem {
 		return this.when;
 	}
 	
+	public int getWhenInt() {
+		if(this.when.equals("ENTER"))
+			return Constants.ENTER;
+		else
+			return Constants.EXIT;
+	}
+	
 	public String getMessage() {
 		return message;
+	}
+	
+	public boolean getActive() {
+		return active;
 	}
 	
 	// SETTERS
@@ -110,5 +122,9 @@ public class AlertListItem {
 	
 	public void setMessage(String message) {
 		this.message = message;
+	}
+	
+	public void setActive(boolean active) {
+		this.active = active;
 	}
 }

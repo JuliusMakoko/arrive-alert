@@ -4,9 +4,9 @@ import java.util.ArrayList;
 
 import myApp.androidappa.R;
 
-
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,12 +54,20 @@ public class AlertListAdapter extends BaseAdapter {
                     context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
             convertView = mInflater.inflate(R.layout.alert_list_item, null);
         }
-         
+        
+		TextView txtStatus = (TextView)convertView.findViewById(R.id.status);
         ImageView imgIcon = (ImageView)convertView.findViewById(R.id.icon);
         TextView txtTitle = (TextView)convertView.findViewById(R.id.title);
         TextView txtContact = (TextView)convertView.findViewById(R.id.contact);
         TextView txtMessage = (TextView)convertView.findViewById(R.id.message);
-         
+        
+        if(alertItems.get(position).getActive()) {
+        	txtStatus.setText("Active");
+        	txtStatus.setTextColor(Color.parseColor("#6AC36A")); // green
+        } else {
+        	txtStatus.setText("Inactive");
+        	txtStatus.setTextColor(Color.parseColor("#FF3300")); //red
+        }
         imgIcon.setImageResource(alertItems.get(position).getIconID());     
         txtTitle.setText(alertItems.get(position).getTitle());
         txtContact.setText(alertItems.get(position).getContact());
