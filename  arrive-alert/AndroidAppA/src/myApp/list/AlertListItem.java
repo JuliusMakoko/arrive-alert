@@ -84,6 +84,9 @@ public class AlertListItem {
 		return this.when;
 	}
 	
+	/*
+     * Getter for alert transition, returns Constants.ENTER (1) or Constants.EXIT (2)
+     */
 	public int getWhenInt() {
 		if(this.when.equals("ENTER"))
 			return Constants.ENTER;
