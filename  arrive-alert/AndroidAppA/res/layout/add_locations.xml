@@ -18,8 +18,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignBottom="@+id/button1"
-                android:ems="10"
-                android:hint="@string/geocode_hint" >
+                android:hint="@string/geocode_hint"
+                android:inputType="textPostalAddress"
+                android:maxEms="10"
+                android:minEms="10" >
 
                 <requestFocus />
             </EditText>

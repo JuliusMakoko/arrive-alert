@@ -21,6 +21,7 @@
     <uses-feature
         android:glEsVersion="0x00020000"
         android:required="true" />
+    <uses-permission android:name="android.permission.SEND_SMS"/>
 
     <application
         android:allowBackup="true"
@@ -67,6 +68,7 @@
             android:label="@string/action_locations">
         </activity>
         <activity android:name="myApp.location.AddLocationActivity" android:windowSoftInputMode="stateHidden" android:parentActivityName="myApp.location.EditLocationActivity"></activity>
+        <service android:exported="false" android:name="myApp.geofence.ReceiveTransitionsIntentService"></service>
     </application>
 
 </manifest>

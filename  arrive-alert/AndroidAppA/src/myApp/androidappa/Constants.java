@@ -14,5 +14,12 @@ public final class Constants {
 	public static final int ENTER = 1;
 	public static final int EXIT = 2;
 	
+	// Text Message Constants
+	public static final String SENT = "SMS_SENT";
+	public static final String DELIVERED = "SMS_DELIVERED";
+	public static final int MAX_SMS_MESSAGE_LENGTH = 160;
+	
 	public static final String DEBUG_TAG = "Debug";
+	
+	
 }

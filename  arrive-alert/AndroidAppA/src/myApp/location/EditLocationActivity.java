@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
@@ -27,11 +28,16 @@ public class EditLocationActivity extends ListActivity {
 	private ArrayList<LocationListItem> locationListItems;
 	private LocationListAdapter mAdapter;
 	private DatabaseHandler db;
+	private TextView noLocationsHeader;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.edit_locations);
 
+		noLocationsHeader = (TextView) findViewById(R.id.textViewNoLocations);
+		noLocationsHeader.setText("You haven't created any locations yet!");
+		noLocationsHeader.setVisibility(View.VISIBLE);
+		
 		db = new DatabaseHandler(this);
 
 		// get the list
@@ -42,6 +48,9 @@ public class EditLocationActivity extends ListActivity {
 
 		// load saved locations from local storage into locationListItems
 		locationListItems = db.getAllLocations();
+		
+		if(locationListItems.size() != 0)
+			noLocationsHeader.setVisibility(View.GONE);
 
 		// set the list adapter
 		mAdapter = new LocationListAdapter(this, locationListItems);
@@ -97,13 +106,15 @@ public class EditLocationActivity extends ListActivity {
 			mAdapter.delete(deleteMe); // remove from adapter
 
 			mAdapter.notifyDataSetChanged();
+			// if the last location was just deleted..
+			if(mAdapter.getCount() == 0)
+				noLocationsHeader.setVisibility(View.VISIBLE);
 
 			Toast.makeText(EditLocationActivity.this,
 					deleteMe.getName() + " was deleted.", Toast.LENGTH_LONG)
 					.show();
 			return true;
 		case R.id.edit:
-			// TODO - open appropriate activity and fill with data
 			LocationListItem editMe = (LocationListItem) mAdapter
 					.getItem((int) info.id);
 
@@ -127,7 +138,7 @@ public class EditLocationActivity extends ListActivity {
 			ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
 		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.context_menu, menu);
+		inflater.inflate(R.menu.context_menu_location, menu);
 	}
 
 	// onClick() for Add New Location button
@@ -159,7 +170,10 @@ public class EditLocationActivity extends ListActivity {
 				db.addLocation(addMe); // add the location to our database
 				mAdapter.add(addMe); // add the location to the list adapter
 				mAdapter.notifyDataSetChanged(); // notify the list adapter
-				Log.w("Warning", "EditLocation - onActivityResult ran");
+
+				// if the first location was just added..
+				if(mAdapter.getCount() != 0)
+					noLocationsHeader.setVisibility(View.GONE);
 			} else if (requestCode == Constants.UPDATE) {
 				// restart activity so the updated alert appears
 				finish();

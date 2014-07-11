@@ -58,6 +58,9 @@ public class AlertListItem {
 		return this.title;
 	}
 	
+	/*
+	 * Get the message type (email, text, etc.)
+	 */
 	public int getIcon(){
 		return this.icon;
 	}

@@ -47,6 +47,9 @@ public class AddLocationActivity extends Activity {
 	private float radius = 400;
 	private String address;
 	private int locationId;
+	
+	private static final float MIN_RADIUS = 150f;
+	private static final float MAX_RADIUS = 1500f;
 
 	private DatabaseHandler db;
 
@@ -81,6 +84,7 @@ public class AddLocationActivity extends Activity {
 
 			// Getting GoogleMap object from the fragment
 			googleMap = fm.getMap();
+			googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
 			// Enabling MyLocation Layer of Google Map
 			// googleMap.setMyLocationEnabled(true);
@@ -235,7 +239,7 @@ public class AddLocationActivity extends Activity {
 
 	// decrease radius of circle
 	public void shrink(View v) {
-		if (radius > 100)
+		if (radius > MIN_RADIUS)
 			radius -= 50;
 
 		// update circle
@@ -245,7 +249,7 @@ public class AddLocationActivity extends Activity {
 
 	// increase radius of circle
 	public void grow(View v) {
-		if (radius < 1500)
+		if (radius < MAX_RADIUS)
 			radius += 50;
 
 		// update circle
@@ -353,7 +357,7 @@ public class AddLocationActivity extends Activity {
 			Toast.makeText(this, "Please enter a name for this location.",
 					Toast.LENGTH_LONG).show();
 			return false;
-		} else if (radius < 100 || radius > 1500) {
+		} else if (radius < MIN_RADIUS || radius > MAX_RADIUS) {
 			Toast.makeText(this, "Invalid radius = " + radius,
 					Toast.LENGTH_LONG).show();
 			return false;

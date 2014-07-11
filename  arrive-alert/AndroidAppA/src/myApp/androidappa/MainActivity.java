@@ -10,6 +10,7 @@
 package myApp.androidappa;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import myApp.database.DatabaseHandler;
@@ -37,6 +38,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.RadioButton;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import com.bugsense.trace.BugSenseHandler;
@@ -50,14 +52,15 @@ import myApp.geofence.GeofenceUtils.REQUEST_TYPE;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-//import myApp.geofence.MainActivity.GeofenceSampleReceiver;
 import com.google.android.gms.location.Geofence;
 
 public class MainActivity extends ListActivity {
 
+	// Global variables
 	private ArrayList<AlertListItem> alertListItems;
 	private AlertListAdapter mAdapter;
 	private DatabaseHandler db;
+	private TextView noAlertsHeader;
 
 	// Geofence variables
 
@@ -107,6 +110,11 @@ public class MainActivity extends ListActivity {
 		BugSenseHandler.initAndStartSession(MainActivity.this, "b52296ad");
 		setContentView(R.layout.activity_main);
 
+		// get reference to no alerts header
+		noAlertsHeader = (TextView) findViewById(R.id.textViewNoAlerts);
+		noAlertsHeader.setText("You haven't created any alerts yet!");
+		noAlertsHeader.setVisibility(View.VISIBLE);
+		
 		db = new DatabaseHandler(this);
 
 		// create an ArrayList of AlertListItems
@@ -114,6 +122,8 @@ public class MainActivity extends ListActivity {
 
 		// load saved alerts from local storage into alertListItems
 		alertListItems = db.getAllAlerts();
+		if(alertListItems.size() != 0)
+			noAlertsHeader.setVisibility(View.GONE);
 
 		// set the list adapter
 		mAdapter = new AlertListAdapter(this, alertListItems);
@@ -173,11 +183,18 @@ public class MainActivity extends ListActivity {
 					.getItem((int) info.id);
 
 			// ********** TODO Confirmation or Undo feature
+			// TODO check if we need to remove geofence
+			if(deleteMe.getActive())
+				unregisterGeofence(deleteMe);
 			db.deleteAlert(deleteMe); // remove alert from database (don't have
 										// to do this)
 			mAdapter.delete(deleteMe); // remove from adapter
 
 			mAdapter.notifyDataSetChanged();
+			
+			// if the last alert was just deleted..
+			if(mAdapter.getCount() == 0)
+				noAlertsHeader.setVisibility(View.VISIBLE);
 
 			Toast.makeText(MainActivity.this,
 					deleteMe.getTitle() + " was deleted.", Toast.LENGTH_LONG)
@@ -218,9 +235,10 @@ public class MainActivity extends ListActivity {
 			AlertListItem activateMe = (AlertListItem) mAdapter
 					.getItem((int) info.id);
 			if (activateMe.getActive()) {
-				// TODO
-				// remove geofence if this is the last alert using corresponding
-				// geofence
+				// TODO remove geofence if this is the last alert using corresponding geofence
+				
+				// right now just removing associated geofence by default
+				unregisterGeofence(activateMe);
 
 				activateMe.setActive(false);
 				Toast.makeText(getApplicationContext(), "Alert Turned Off!",
@@ -228,11 +246,14 @@ public class MainActivity extends ListActivity {
 			} else {
 				// check to see if geofence for this location is already active
 				boolean active = false;
-				for (Geofence g : mCurrentGeofences)
-					if (Integer.parseInt(g.getRequestId()) == activateMe
-							.getLocation())
+				String alertInUse = "";
+				int geofenceID = -1;
+				for (Geofence g : mCurrentGeofences) {
+					geofenceID = Integer.parseInt(g.getRequestId());
+					if (geofenceID == activateMe.getLocation()) {
 						active = true;
-
+					}
+				}
 				// TODO
 				// if no geofence exists -- create one
 				if (active == false) {
@@ -242,6 +263,14 @@ public class MainActivity extends ListActivity {
 					activateMe.setActive(true);
 					Toast.makeText(getApplicationContext(), "Alert Turned On!",
 							Toast.LENGTH_SHORT).show();
+				} else {
+					for(AlertListItem a : alertListItems)
+						if(a.getLocation() == geofenceID && !a.equals(activateMe))
+							alertInUse = a.getTitle();
+					Toast.makeText(getApplicationContext(), "Sorry, that location is already" +
+							" being used to monitor '" + alertInUse + "'. Either deactivate it or" +
+							" create a new location.",
+							Toast.LENGTH_LONG).show();
 				}
 
 				
@@ -393,6 +422,10 @@ public class MainActivity extends ListActivity {
 				db.addAlert(addMe); // add the alert to our database
 				mAdapter.add(addMe); // add the alert to the list adapter
 				mAdapter.notifyDataSetChanged(); // notify the list adapter
+				
+				// if the first alert was just added..
+				if(mAdapter.getCount() != 0)
+					noAlertsHeader.setVisibility(View.GONE);
 			}
 			break;
 		case Constants.UPDATE:
@@ -579,6 +612,55 @@ public class MainActivity extends ListActivity {
 					Toast.LENGTH_LONG).show();
         }
         
+    }
+    
+    /**
+     * Called when the user clicks the "Remove geofence 1" button
+     * @param view The view that triggered this callback
+     */
+    public void unregisterGeofence(AlertListItem alert) {
+        /*
+         * Remove the geofence by creating a List of geofences to
+         * remove and sending it to Location Services. The List
+         * contains the id of geofence to be removed {location}.
+         * The removal happens asynchronously; Location Services calls
+         * onRemoveGeofencesByPendingIntentResult() (implemented in
+         * the current Activity) when the removal is done.
+         */
+
+        // Create a List of 1 Geofence with the ID {location} and store it in the global list
+        mGeofenceIdsToRemove = Collections.singletonList(String.valueOf(alert.getLocation()));
+
+        /*
+         * Record the removal as remove by list. If a connection error occurs,
+         * the app can automatically restart the removal if Google Play services
+         * can fix the error
+         */
+        mRemoveType = GeofenceUtils.REMOVE_TYPE.LIST;
+
+        /*
+         * Check for Google Play services. Do this after
+         * setting the request type. If connecting to Google Play services
+         * fails, onActivityResult is eventually called, and it needs to
+         * know what type of request was in progress.
+         */
+        if (!servicesConnected()) {
+
+            return;
+        }
+
+        // Try to remove the geofence
+        try {
+            mGeofenceRemover.removeGeofencesById(mGeofenceIdsToRemove);
+
+        // Catch errors with the provided geofence IDs
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (UnsupportedOperationException e) {
+            // Notify user that previous request hasn't finished.
+            Toast.makeText(this, R.string.remove_geofences_already_requested_error,
+                        Toast.LENGTH_LONG).show();
+        }
     }
 	
 	/**

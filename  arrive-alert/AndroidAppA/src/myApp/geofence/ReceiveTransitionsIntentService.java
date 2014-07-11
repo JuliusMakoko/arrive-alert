@@ -11,13 +11,19 @@ import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.telephony.SmsManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import myApp.androidappa.Constants;
 import myApp.androidappa.MainActivity;
 import myApp.androidappa.R;
+import myApp.database.DatabaseHandler;
+import myApp.list.AlertListItem;
 
 /**
  * This class receives geofence transition events from Location Services, in the
@@ -26,6 +32,7 @@ import myApp.androidappa.R;
  */
 public class ReceiveTransitionsIntentService extends IntentService {
 
+	private DatabaseHandler db;
     /**
      * Sets an identifier for this class' background thread
      */
@@ -74,7 +81,14 @@ public class ReceiveTransitionsIntentService extends IntentService {
 
             // Get the type of transition (entry or exit)
             int transition = LocationClient.getGeofenceTransition(intent);
-
+            
+            // get the triggered alert(s)
+            db = new DatabaseHandler(this);
+            ArrayList<AlertListItem> alerts = db.getAllAlerts();
+            db.close();
+            AlertListItem alert = null;
+            
+            
             // Test that a valid transition was reported
             if (
                     (transition == Geofence.GEOFENCE_TRANSITION_ENTER)
@@ -85,13 +99,45 @@ public class ReceiveTransitionsIntentService extends IntentService {
                 // Post a notification
                 List<Geofence> geofences = LocationClient.getTriggeringGeofences(intent);
                 String[] geofenceIds = new String[geofences.size()];
+                
+                // 
                 for (int index = 0; index < geofences.size() ; index++) {
                     geofenceIds[index] = geofences.get(index).getRequestId();
+                    for(int i = 0; i < alerts.size(); i++) {
+                    	if( geofenceIds[index].equals(String.valueOf(alerts.get(i).getLocation())) )   
+                    		if(alerts.get(i).getWhenInt() == transition)
+                    			alert = alerts.get(i);
+                    }
                 }
+                
+                
                 String ids = TextUtils.join(GeofenceUtils.GEOFENCE_ID_DELIMITER,geofenceIds);
                 String transitionType = getTransitionString(transition);
 
-                sendNotification(transitionType, ids);
+                // TODO handle the actual alert -- send message (email or text)
+                switch(alert.getIcon()) {
+                case Constants.EMAIL:
+                	Intent emailIntent = new Intent(Intent.ACTION_SEND);
+                	emailIntent.putExtra(Intent.EXTRA_EMAIL  , new String[]{alert.getContact()});
+                	emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Arrive Alert - (Android App)");
+                	emailIntent.putExtra(Intent.EXTRA_TEXT   , alert.getMessage());
+                	
+                	// TODO send email behind the scenes
+                	Toast.makeText(this, "Sent email to " + alert.getContact(),
+                            Toast.LENGTH_LONG).show();
+                	
+                	break;
+                case Constants.TEXT:
+                	sendSMS(alert.getContact(), "via ArriveAlert: " + alert.getMessage());
+                	Toast.makeText(this, "Sent text to " + alert.getContact(),
+                            Toast.LENGTH_LONG).show();
+                	break;
+                	default:
+                		// not supposed to happen
+                }
+                
+                if(alert != null)
+                	sendNotification(transitionType, ids, alert);
 
                 // Log the transition type and a message
                 Log.d(GeofenceUtils.APPTAG,
@@ -117,7 +163,7 @@ public class ReceiveTransitionsIntentService extends IntentService {
      * @param transitionType The type of transition that occurred.
      *
      */
-    private void sendNotification(String transitionType, String ids) {
+    private void sendNotification(String transitionType, String ids, AlertListItem alert) {
 
         // Create an explicit content Intent that starts the main Activity
         Intent notificationIntent =
@@ -140,12 +186,22 @@ public class ReceiveTransitionsIntentService extends IntentService {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
         // Set the notification contents
+//        builder.setSmallIcon(R.drawable.ic_notification)
+//               .setContentTitle(
+//                       getString(R.string.geofence_transition_notification_title,
+//                               transitionType, ids))
+//               .setContentText(getString(R.string.geofence_transition_notification_text))
+//               .setContentIntent(notificationPendingIntent);
+        String typeSent;
+        if(alert.getIcon() == Constants.EMAIL)
+        	typeSent = "Sent email to " + alert.getContact() + "\n";
+        else
+        	typeSent = "Sent text message to " + alert.getContact() + "\n";
+        
         builder.setSmallIcon(R.drawable.ic_notification)
-               .setContentTitle(
-                       getString(R.string.geofence_transition_notification_title,
-                               transitionType, ids))
-               .setContentText(getString(R.string.geofence_transition_notification_text))
-               .setContentIntent(notificationPendingIntent);
+        .setContentTitle(alert.getTitle())
+        .setContentText(typeSent + alert.getMessage())
+        .setContentIntent(notificationPendingIntent);
 
         // Get an instance of the Notification manager
         NotificationManager mNotificationManager =
@@ -173,5 +229,22 @@ public class ReceiveTransitionsIntentService extends IntentService {
                 return getString(R.string.geofence_transition_unknown);
         }
     }
+    
+ // ---sends an SMS message to another device---
+    public void sendSMS(String phoneNumber, String message) {
+
+        PendingIntent piSent = PendingIntent.getBroadcast(this, 0, new Intent(Constants.SENT), 0);
+        PendingIntent piDelivered = PendingIntent.getBroadcast(this, 0,new Intent(Constants.DELIVERED), 0);
+        SmsManager smsManager = SmsManager.getDefault();
+
+        int length = message.length();          
+        if(length > Constants.MAX_SMS_MESSAGE_LENGTH) {
+            ArrayList<String> messagelist = smsManager.divideMessage(message);          
+            smsManager.sendMultipartTextMessage(phoneNumber, null, messagelist, null, null);
+        }
+        else
+            smsManager.sendTextMessage(phoneNumber, null, message, piSent, piDelivered);
+      }
+    
 }
 
