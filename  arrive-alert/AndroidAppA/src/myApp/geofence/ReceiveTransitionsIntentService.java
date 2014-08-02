@@ -14,7 +14,6 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.telephony.SmsManager;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -123,15 +122,13 @@ public class ReceiveTransitionsIntentService extends IntentService {
                 	emailIntent.putExtra(Intent.EXTRA_TEXT   , alert.getMessage());
                 	
                 	// TODO send email behind the scenes
-                	Toast.makeText(this, "Sent email to " + alert.getContact(),
-                            Toast.LENGTH_LONG).show();
                 	
                 	break;
+                
                 case Constants.TEXT:
                 	sendSMS(alert.getContact(), "via ArriveAlert: " + alert.getMessage());
-                	Toast.makeText(this, "Sent text to " + alert.getContact(),
-                            Toast.LENGTH_LONG).show();
                 	break;
+                	
                 	default:
                 		// not supposed to happen
                 }

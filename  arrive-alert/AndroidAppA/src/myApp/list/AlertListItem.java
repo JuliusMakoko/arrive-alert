@@ -11,16 +11,16 @@ import myApp.androidappa.Constants;
 import myApp.androidappa.R;
 
 public class AlertListItem {
-	private String title;   // name of the alert
-	private int icon;	    // id for email or text icon
+	private String title; // name of the alert
+	private int icon; // id for email or text icon
 	private String contact; // phone # or email
-	private String when;    // "enter" or "exit"
+	private String when; // "enter" or "exit"
 	private String message; // the message being sent
-	private int location;   // still unsure how it will be stored
+	private int location; // still unsure how it will be stored
 	private boolean active = false;
-	
+
 	// Constructors
-	public AlertListItem(){
+	public AlertListItem() {
 		this.title = "alert name";
 		this.contact = "contact@email.com";
 		this.message = "Hey mom, I'm leaving school now. See you soon!";
@@ -29,22 +29,25 @@ public class AlertListItem {
 		this.when = "EXIT";
 	}
 
-//	public AlertListItem(String title, int icon, String contact, String message){
-//		this.title = title;
-//		this.icon = icon;
-//		this.contact = contact;
-//		this.message = message;
-//	}
-	
-	public AlertListItem(String title, int icon, String when, String contact, String message){
+	// public AlertListItem(String title, int icon, String contact, String
+	// message){
+	// this.title = title;
+	// this.icon = icon;
+	// this.contact = contact;
+	// this.message = message;
+	// }
+
+	public AlertListItem(String title, int icon, String when, String contact,
+			String message) {
 		this.title = title;
 		this.icon = icon;
 		this.when = when;
 		this.contact = contact;
 		this.message = message;
 	}
-	
-	public AlertListItem(String title, String contact, int location, String message, String when, int icon){
+
+	public AlertListItem(String title, String contact, int location,
+			String message, String when, int icon) {
 		this.title = title;
 		this.icon = icon;
 		this.when = when;
@@ -53,83 +56,95 @@ public class AlertListItem {
 		this.location = location;
 	}
 
+	public AlertListItem(String title, String contact, int location,
+			String message, String when, int icon, boolean active) {
+		this.title = title;
+		this.icon = icon;
+		this.when = when;
+		this.contact = contact;
+		this.message = message;
+		this.location = location;
+		this.active = active;
+	}
+
 	// GETTERS
-	public String getTitle(){
+	public String getTitle() {
 		return this.title;
 	}
-	
+
 	/*
 	 * Get the message type (email, text, etc.)
 	 */
-	public int getIcon(){
+	public int getIcon() {
 		return this.icon;
 	}
-	
+
 	// Used to retrieve the drawable icon resource
 	public int getIconID() {
 		int returnMe = -1;
-		if(this.icon == Constants.EMAIL)
+		if (this.icon == Constants.EMAIL)
 			returnMe = R.drawable.ic_action_email;
-		else if(this.icon == Constants.TEXT)
+		else if (this.icon == Constants.TEXT)
 			returnMe = R.drawable.ic_action_chat;
 		return returnMe;
 	}
-	
+
 	public int getLocation() {
 		return location;
 	}
-	
-	public String getContact(){
+
+	public String getContact() {
 		return this.contact;
 	}
-	
-	public String getWhen(){
+
+	public String getWhen() {
 		return this.when;
 	}
-	
+
 	/*
-     * Getter for alert transition, returns Constants.ENTER (1) or Constants.EXIT (2)
-     */
+	 * Getter for alert transition, returns Constants.ENTER (1) or
+	 * Constants.EXIT (2)
+	 */
 	public int getWhenInt() {
-		if(this.when.equals("ENTER"))
+		if (this.when.equals("ENTER"))
 			return Constants.ENTER;
 		else
 			return Constants.EXIT;
 	}
-	
+
 	public String getMessage() {
 		return message;
 	}
-	
+
 	public boolean getActive() {
 		return active;
 	}
-	
+
 	// SETTERS
-	public void setTitle(String title){
+	public void setTitle(String title) {
 		this.title = title;
 	}
-	
-	public void setIcon(int icon){
+
+	public void setIcon(int icon) {
 		this.icon = icon;
 	}
-	
+
 	public void setLocation(int location) {
 		this.location = location;
 	}
-	
-	public void setContact(String contact){
+
+	public void setContact(String contact) {
 		this.contact = contact;
 	}
-	
-	public void setWhen(String when){
+
+	public void setWhen(String when) {
 		this.when = when;
 	}
-	
+
 	public void setMessage(String message) {
 		this.message = message;
 	}
-	
+
 	public void setActive(boolean active) {
 		this.active = active;
 	}

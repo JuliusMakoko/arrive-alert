@@ -13,6 +13,11 @@
     <string name="radio0">Text</string>
     <string name="radio1">Email</string>
     
+    <!-- settings strings -->
+    <string name="settings_trigger_once">1 time (<b>recommended</b>)</string>
+    <string name="settings_trigger_five">5 times</string>
+    <string name="settings_trigger_never">Never automatically turn off my alerts (<b>Warning - may result in excessive alert triggers due to poor signal or inaccurate gps</b>)</string>
+    
     <!--  add_new_***_alert strings -->
     <string name="new_text_alert">New Text Alert</string>
     <string name="name_label">Name:</string>
@@ -53,7 +58,7 @@
     
     <!-- add new location strings -->
     <string name="go_button">Find</string>
-    <string name="this_location_button">Add This Location</string>
+    <string name="this_location_button">Add</string>
     <string name="geocode_hint">Find location</string>
     <string name="location_name_hint">Work</string>
     <string name="location_name_description">(Give this location a meaningful name)</string>

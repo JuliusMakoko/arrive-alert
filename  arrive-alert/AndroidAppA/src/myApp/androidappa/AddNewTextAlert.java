@@ -15,6 +15,7 @@ import myApp.location.EditLocationActivity;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
@@ -35,6 +36,9 @@ public class AddNewTextAlert extends Activity {
 	private RadioButton exitRadio;
 	private Button createButton;
 	private DatabaseHandler db;
+	
+	// used to hold the old_location_id when in edit mode
+	private int oldLocationId = -2;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -57,10 +61,13 @@ public class AddNewTextAlert extends Activity {
 			phoneAdd.setText(received.getStringExtra("CONTACT"));
 			int locId = received.getIntExtra("LOCATION", 0);
 			
+			oldLocationId = locId; // set oldLocationId
+			
 			if(db.locationExists(locId))
 				location.setText(db.getLocation(locId).getName());
 			else
 				location.setText("Location not found");
+			
 			message.setText(received.getStringExtra("MESSAGE"));
 			if (received.getStringExtra("WHEN").equals("EXIT"))
 				exitRadio.setChecked(true);
@@ -137,6 +144,10 @@ public class AddNewTextAlert extends Activity {
 			String text = message.getText().toString();
 			String loc = location.getText().toString();
 			String when;
+			AlertListItem a = db.getAlert(name);
+			boolean active = a.getActive();
+			boolean unregister = false;
+			
 			if (exitRadio.isChecked())
 				when = "EXIT";
 			else
@@ -146,14 +157,25 @@ public class AddNewTextAlert extends Activity {
 			if(db.locationExists(loc))
 				locId = db.getLocation(loc).getLocationId();
 			
+			// if old alert was active (has an active geofence)
+			if(active) {
+				// need to unregister old geofence
+				unregister = true;
+				active = false;
+			}
+			
 			AlertListItem updateMe = new AlertListItem(name, phone,
-					locId, text, when, Constants.TEXT);
+					locId, text, when, Constants.TEXT, active);
 
 			if (db.updateAlert(updateMe) == 1) {
 				Toast.makeText(getApplicationContext(),
 						"'" + name + "' was succesfully updated!",
 						Toast.LENGTH_LONG).show();
-				Intent intentMessage = new Intent();
+				Intent intentMessage = new Intent();	
+				// pass this value if geofence needs to be unregistered
+				if(unregister)
+					intentMessage.putExtra("GEOFENCE_ID", String.valueOf(oldLocationId));
+				
 				setResult(RESULT_OK, intentMessage);
 
 				finish();
@@ -175,6 +197,7 @@ public class AddNewTextAlert extends Activity {
 
 		// if a location by that name doesn't exist -- then return false
 		if (db.locationExists(loc) == false) {
+			//location.setBackgroundColor(Color.parseColor("#FF3300"));
 			Toast.makeText(
 					AddNewTextAlert.this,
 					"Couldn't find a location by that name."
@@ -185,21 +208,25 @@ public class AddNewTextAlert extends Activity {
 
 		// Validate input
 		if (checkEmpty(name)) { // Ensure name is NOT empty
+			//alertName.setBackgroundColor(Color.parseColor("#FF3300"));
 			Toast.makeText(AddNewTextAlert.this, "Give your alert a name!",
 					Toast.LENGTH_LONG).show();
 			return false;
 		} else if (checkEmpty(phone)) { // Ensure phone # is NOT empty
+			//phoneAdd.setBackgroundColor(Color.parseColor("#FF3300"));
 			Toast.makeText(AddNewTextAlert.this,
 					"You forgot to enter a phone number", Toast.LENGTH_LONG)
 					.show();
 			return false;
 		} else if (!checkPhone(phone)) { // Ensure phone # passes validation
+			//phoneAdd.setBackgroundColor(Color.parseColor("#FF3300"));
 			Toast.makeText(
 					AddNewTextAlert.this,
 					"Phone number must contain only numbers, dashes or parentheses "
 							+ phone, Toast.LENGTH_LONG).show();
 			return false;
 		} else if (checkEmpty(text)) { // Ensure message is NOT empty
+			//message.setBackgroundColor(Color.parseColor("#FF3300"));
 			Toast.makeText(AddNewTextAlert.this,
 					"You need to enter a message to send to " + phone,
 					Toast.LENGTH_LONG).show();

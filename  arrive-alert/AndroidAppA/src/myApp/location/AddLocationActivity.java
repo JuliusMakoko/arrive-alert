@@ -3,6 +3,7 @@ package myApp.location;
 import java.io.IOException;
 import java.util.List;
 
+import myApp.androidappa.Constants;
 import myApp.androidappa.R;
 import myApp.database.DatabaseHandler;
 import myApp.list.LocationListItem;
@@ -11,6 +12,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
@@ -35,7 +37,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-public class AddLocationActivity extends Activity {
+public class AddLocationActivity extends Activity implements
+		OnMapLongClickListener {
 	private GoogleMap googleMap;
 	private EditText editTextSearch;
 	private EditText locationName;
@@ -47,15 +50,19 @@ public class AddLocationActivity extends Activity {
 	private float radius = 400;
 	private String address;
 	private int locationId;
-	
+	private String name;
+
 	private static final float MIN_RADIUS = 150f;
 	private static final float MAX_RADIUS = 1500f;
+	private static final int DEFAULT_ZOOM = 15;
+	private static final int DEFAULT_CIRCLE_COLOR = Color.RED;
+	private static final int DEFAULT_FILL_COLOR = 0x40ff0000;
 
 	private DatabaseHandler db;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.add_locations);
+		setContentView(R.layout.add_location);
 
 		// get db handler
 		db = new DatabaseHandler(this);
@@ -84,8 +91,9 @@ public class AddLocationActivity extends Activity {
 
 			// Getting GoogleMap object from the fragment
 			googleMap = fm.getMap();
-			googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-
+			googleMap.setPadding(0, 0, 0, 140);
+			googleMap.setOnMapLongClickListener(this);
+			
 			// Enabling MyLocation Layer of Google Map
 			// googleMap.setMyLocationEnabled(true);
 
@@ -113,31 +121,34 @@ public class AddLocationActivity extends Activity {
 
 			} else if (isEdit) { // if activity was called by edit intent...
 
+				Toast.makeText(this, "Edit Intent...", Toast.LENGTH_LONG)
+						.show();
+
 				// change button text
-				createButton.setText("Update Location");
-				
-				String name = received.getStringExtra("NAME");
+				createButton.setText(Constants.LOCATION_UPDATE_TEXT);
+
+				name = received.getStringExtra("NAME");
 				locationName.setText(name);
-				
+
 				// disable locationName editText box
 				locationName.setEnabled(false);
-				
+
 				// update globals
 				latitude = received.getDoubleExtra("LATITUDE", latitude);
 				longitude = received.getDoubleExtra("LONGITUDE", longitude);
 				radius = received.getFloatExtra("RADIUS", radius);
 				address = received.getStringExtra("ADDRESS");
 				locationId = received.getIntExtra("LOCATION_ID", -1);
-				
+
 				// center map on location to be edited
 				googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
-						new LatLng(latitude, longitude), 14));
+						new LatLng(latitude, longitude), DEFAULT_ZOOM));
 
 				// add a circle around received location
 				circle = googleMap.addCircle(new CircleOptions()
-						.center(new LatLng(latitude, longitude))
-						.radius(radius).strokeColor(Color.RED)
-						.fillColor(Color.TRANSPARENT));
+						.center(new LatLng(latitude, longitude)).radius(radius)
+						.strokeColor(DEFAULT_CIRCLE_COLOR).strokeWidth(2)
+						.fillColor(DEFAULT_FILL_COLOR));
 
 				// add a marker at received location
 				marker = googleMap.addMarker(new MarkerOptions().position(
@@ -160,21 +171,33 @@ public class AddLocationActivity extends Activity {
 			googleMap
 					.animateCamera(CameraUpdateFactory.newLatLngZoom(
 							new LatLng(location.getLatitude(), location
-									.getLongitude()), 14));
+									.getLongitude()), DEFAULT_ZOOM));
 
 			latitude = location.getLatitude();
 			longitude = location.getLongitude();
-			// add a circle around current location
-			circle = googleMap.addCircle(new CircleOptions()
-					.center(new LatLng(latitude, longitude)).radius(radius)
-					.strokeColor(Color.RED).fillColor(Color.TRANSPARENT));
+			// add a fence and marker at current location
+			updateFence(new LatLng(latitude, longitude), "Last Known Location");
 
-			// add a marker at current / last known loc
-			marker = googleMap.addMarker(new MarkerOptions().position(
-					new LatLng(latitude, longitude)).title(
-					"Last Known Location"));
-			marker.showInfoWindow();
 		}
+	}
+
+	private void updateFence(LatLng latLng, String name) {
+		// add a circle around given lat and long
+		if(circle != null) 
+			circle.remove();
+		if(marker != null)
+			marker.remove();
+		
+		circle = googleMap.addCircle(new CircleOptions()
+				.center(latLng).radius(radius)
+				.strokeColor(DEFAULT_CIRCLE_COLOR)
+				.fillColor(DEFAULT_FILL_COLOR)
+				.strokeWidth(2));
+
+		// add a marker at loc
+		marker = googleMap.addMarker(new MarkerOptions().position(latLng).title(name));
+		marker.showInfoWindow();
+
 	}
 
 	// onClick() method of 'find' button - searches GoogleMap fragment
@@ -186,11 +209,11 @@ public class AddLocationActivity extends Activity {
 			List<Address> myList;
 			Geocoder gc = new Geocoder(getBaseContext());
 			try {
-				myList = gc
-						.getFromLocationName(editTextSearch.getText().toString(), 1);
+				myList = gc.getFromLocationName(editTextSearch.getText()
+						.toString(), 1);
 				if (myList.size() > 0) {
 					Address a = myList.get(0);
-					
+
 					// update global long and lat
 					latitude = a.getLatitude();
 					longitude = a.getLongitude();
@@ -205,23 +228,13 @@ public class AddLocationActivity extends Activity {
 					}
 					if (s.length() > 0)
 						address = s.toString();
-					
+
 					googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
-							new LatLng(latitude, longitude), 14));
+							new LatLng(latitude, longitude), DEFAULT_ZOOM));
 					// if a circle exists remove it and add a new one
-					if (circle != null && circle.isVisible()) {
-						circle.remove();
-						circle = googleMap.addCircle(new CircleOptions()
-								.center(new LatLng(latitude, longitude))
-								.radius(radius).strokeColor(Color.RED)
-								.fillColor(Color.TRANSPARENT));
-					}
-					// if a marker exists remove it and add a new one
-					if (marker != null && marker.isVisible()) {
-						marker.remove();
-						marker = googleMap.addMarker(new MarkerOptions()
-								.position(new LatLng(latitude, longitude)));
-					}
+					updateFence(new LatLng(latitude, longitude), editTextSearch.getText()
+							.toString());
+
 				} else {
 					Toast.makeText(this, "Sorry, couldn't find that location",
 							Toast.LENGTH_LONG).show();
@@ -259,9 +272,9 @@ public class AddLocationActivity extends Activity {
 
 	// onClick() handler
 	public void buttonHandler(View v) {
-		if (createButton.getText().equals("Add This Location"))
+		if (createButton.getText().equals(Constants.LOCATION_ADD_TEXT))
 			addLocation(v);
-		else
+		else if (createButton.getText().equals(Constants.LOCATION_UPDATE_TEXT))
 			updateLocation(v);
 	}
 
@@ -271,28 +284,9 @@ public class AddLocationActivity extends Activity {
 			// get location name
 			String name = locationName.getText().toString();
 
-			address = "No address found.";
-
-			List<Address> myList;
-			Geocoder gc = new Geocoder(getBaseContext());
-			try {
-				myList = gc.getFromLocation(latitude, longitude, 1);
-				if (myList.size() > 0) {
-					Address temp = myList.get(0);
-					StringBuilder s = new StringBuilder();
-					int i = 0;
-					while (temp.getAddressLine(i) != null) {
-						s.append(temp.getAddressLine(i));
-						s.append("\n");
-						i++;
-					}
-					if (s.length() > 0)
-						address = s.toString();
-				}
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			// update address based on current lat + long
+			updateAddress();
+			
 			// check for duplicate location name
 			if (db.locationExists(name)) {
 				Toast.makeText(
@@ -305,10 +299,10 @@ public class AddLocationActivity extends Activity {
 			// Debugging toast
 			Toast.makeText(
 					this,
-					"Added new location: " + name + " latitude = " + latitude
-							+ " longitude = " + longitude + " radius = "
-							+ radius + " Address: " + address,
-					Toast.LENGTH_LONG).show();
+					"Added new location: ID#" + locationId + " " + name
+							+ " latitude = " + latitude + " longitude = "
+							+ longitude + " radius = " + radius + " Address: "
+							+ address, Toast.LENGTH_LONG).show();
 
 			Intent intentMessage = new Intent();
 
@@ -327,11 +321,13 @@ public class AddLocationActivity extends Activity {
 		// if user input is valid then we can update the location
 		if (isInputValid()) {
 			// get user data and convert to Strings
-			String name = locationName.getText().toString();
+			// String name = locationName.getText().toString();
 
+			// update address based on current lat + long
+			updateAddress();
 			
-			LocationListItem updateMe = new LocationListItem(locationId, name, latitude, longitude,
-					radius, address);
+			LocationListItem updateMe = new LocationListItem(locationId, name,
+					latitude, longitude, radius, address);
 
 			if (db.updateLocation(updateMe) == 1) {
 				Toast.makeText(getApplicationContext(),
@@ -342,9 +338,11 @@ public class AddLocationActivity extends Activity {
 
 				finish();
 			} else {
-				Toast.makeText(getApplicationContext(),
-						"Couldn't find a location named '" + name + "'.",
-						Toast.LENGTH_LONG).show();
+				Toast.makeText(
+						getApplicationContext(),
+						"Couldn't find a location named '" + name
+								+ "'. With id#" + locationId, Toast.LENGTH_LONG)
+						.show();
 			}
 			db.close();
 		}
@@ -369,6 +367,41 @@ public class AddLocationActivity extends Activity {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public void onMapLongClick(LatLng point) {
+		// update global variables
+		latitude = point.latitude;
+		longitude = point.longitude;
+		
+		updateFence(point, "New Location");
+	}
+	
+	// returns a string containing the address of the current location 
+	public void updateAddress() {
+		address = "No address found.";
+		List<Address> myList;
+		Geocoder gc = new Geocoder(getBaseContext());
+		try {
+			myList = gc.getFromLocation(latitude, longitude, 1);
+			if (myList.size() > 0) {
+				Address temp = myList.get(0);
+				StringBuilder s = new StringBuilder();
+				int i = 0;
+				while (temp.getAddressLine(i) != null) {
+					s.append(temp.getAddressLine(i));
+					s.append("\n");
+					i++;
+				}
+				if (s.length() > 0)
+					address = s.toString();
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 
 }

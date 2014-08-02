@@ -59,7 +59,7 @@
             android:windowSoftInputMode="stateHidden" >
         </activity>
         <activity
-            android:name="myApp.androidappa.SettingsActivity"
+            android:name="myApp.settings.SettingsActivity"
             android:label="@string/action_settings"
             android:parentActivityName="myApp.androidappa.MainActivity" >
         </activity>

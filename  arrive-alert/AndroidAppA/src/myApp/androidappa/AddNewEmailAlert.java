@@ -9,12 +9,20 @@
 
 package myApp.androidappa;
 
+import java.util.ArrayList;
+
 import myApp.database.DatabaseHandler;
 import myApp.list.AlertListItem;
 import myApp.location.EditLocationActivity;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
+import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract.CommonDataKinds.Email;
@@ -35,6 +43,9 @@ public class AddNewEmailAlert extends Activity {
 	private RadioButton enterRadio;
 	private RadioButton exitRadio;
 	private Button createButton;
+
+	// used to hold the old_location_id when in edit mode
+	private int oldLocationId = -2;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -57,6 +68,9 @@ public class AddNewEmailAlert extends Activity {
 			emailAdd.setText(received.getStringExtra("CONTACT"));
 
 			int locId = received.getIntExtra("LOCATION", 0);
+
+			oldLocationId = locId; // set oldLocationId
+
 			if (db.locationExists(locId))
 				location.setText(db.getLocation(locId).getName());
 			else
@@ -137,6 +151,10 @@ public class AddNewEmailAlert extends Activity {
 			String text = message.getText().toString();
 			String loc = location.getText().toString();
 			String when;
+			AlertListItem a = db.getAlert(name);
+			boolean active = a.getActive();
+			boolean unregister = false;
+
 			if (exitRadio.isChecked())
 				when = "EXIT";
 			else
@@ -146,14 +164,26 @@ public class AddNewEmailAlert extends Activity {
 			if (db.locationExists(loc))
 				locId = db.getLocation(loc).getLocationId();
 
+			// if old alert was active (has an active geofence)
+			if (active) {
+				// need to unregister old geofence
+				unregister = true;
+				active = false;
+			}
+
+
 			AlertListItem updateMe = new AlertListItem(name, email, locId,
-					text, when, Constants.EMAIL);
+					text, when, Constants.EMAIL, active);
 
 			if (db.updateAlert(updateMe) == 1) {
 				Toast.makeText(getApplicationContext(),
 						"'" + name + "' was succesfully updated!",
 						Toast.LENGTH_LONG).show();
 				Intent intentMessage = new Intent();
+				// pass this value if geofence needs to be unregistered
+				if(unregister)
+					intentMessage.putExtra("GEOFENCE_ID", String.valueOf(oldLocationId));
+				
 				setResult(RESULT_OK, intentMessage);
 
 				finish();
@@ -175,6 +205,7 @@ public class AddNewEmailAlert extends Activity {
 
 		// if a location by that name doesn't exist -- then return false
 		if (db.locationExists(loc) == false) {
+			//location.setBackgroundColor(Color.parseColor("#FF3300"));
 			Toast.makeText(
 					AddNewEmailAlert.this,
 					"Couldn't find a location by that name."
@@ -185,20 +216,24 @@ public class AddNewEmailAlert extends Activity {
 
 		// Validate input
 		if (checkEmpty(name)) { // Ensure name field is NOT empty
+			//alertName.setBackgroundColor(Color.parseColor("#FF3300"));
 			Toast.makeText(AddNewEmailAlert.this, "Give your alert a name!",
 					Toast.LENGTH_LONG).show();
 			return false;
 		} else if (checkEmpty(email)) { // Ensure email field is NOT empty
+			emailAdd.setBackgroundColor(Color.parseColor("#FF3300"));
 			Toast.makeText(AddNewEmailAlert.this,
 					"You forgot to enter an email address", Toast.LENGTH_LONG)
 					.show();
 			return false;
 			// Do a tiny amount of email validation
 		} else if (!email.contains("@") || !email.contains(".")) {
+			//emailAdd.setBackgroundColor(Color.parseColor("#FF3300"));
 			Toast.makeText(AddNewEmailAlert.this,
 					"That email address isn't valid", Toast.LENGTH_LONG).show();
 			return false;
 		} else if (checkEmpty(text)) { // Ensure message field is NOT empty
+			//message.setBackgroundColor(Color.parseColor("#FF3300"));
 			Toast.makeText(AddNewEmailAlert.this,
 					"You need to enter a message to send to " + email,
 					Toast.LENGTH_LONG).show();
@@ -258,6 +293,7 @@ public class AddNewEmailAlert extends Activity {
 						email = cursor.getString(emailInd);
 						Log.v(Constants.DEBUG_TAG, "Got email: " + email);
 
+						
 						// iterate through additional email addresses
 						while (cursor.moveToNext()) {
 							Log.v(Constants.DEBUG_TAG, "Also found email: "
@@ -282,12 +318,14 @@ public class AddNewEmailAlert extends Activity {
 								Toast.LENGTH_LONG).show();
 					}
 				}
-
+			    				
 			} else if (requestCode == Constants.LOCATION_PICKER_RESULT) {
 				String name = data.getStringExtra("NAME");
 				EditText locationEntry = (EditText) findViewById(R.id.editTextLocation);
 				locationEntry.setText(name);
-				Log.d(Constants.DEBUG_TAG, "LOCATION_PICKER_RESULT received - location name = " + name);
+				Log.d(Constants.DEBUG_TAG,
+						"LOCATION_PICKER_RESULT received - location name = "
+								+ name);
 			}
 		} else {
 			// gracefully handle failure

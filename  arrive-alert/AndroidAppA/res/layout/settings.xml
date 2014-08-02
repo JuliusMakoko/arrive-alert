@@ -4,9 +4,60 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-    <SeekBar
-        android:id="@+id/seekBar1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="5dp"
+        android:layout_marginTop="5dp"
+        android:text="Alert Frequency"
+        android:textSize="22sp" />
+    
+    <View android:id="@+id/separator" 
+ 		android:background="#000000" 
+ 		android:layout_width = "fill_parent"
+ 		android:layout_height="2dip" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="How many times should alerts trigger before automatically turning off?"
+        android:textSize="16sp" />
+
+    <RadioGroup
+        android:id="@+id/radioGroup1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="5dp" >
+
+        <RadioButton
+            android:id="@+id/radioOneTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:checked="true"
+            android:text="@string/settings_trigger_once" />
+
+        <RadioButton
+            android:id="@+id/radioNever"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:layout_marginBottom="10dp"
+            android:text="@string/settings_trigger_never" />
+
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="15dp"
+        android:background="@drawable/button_rectangle_rounded"
+        android:onClick="save"
+        android:text="Save" />
 
 </LinearLayout>

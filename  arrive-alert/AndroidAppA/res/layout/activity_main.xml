@@ -31,6 +31,12 @@
             android:layout_weight="1"
             android:longClickable="true" />
 
+        <TextView
+            android:id="@+id/alert_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal" />
+
     <RadioGroup
         android:id="@+id/radioGroup1"
         android:layout_width="match_parent"
@@ -49,7 +55,9 @@
             android:id="@+id/radio1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:enabled="false"
             android:text="@string/radio1" />
+
     </RadioGroup>
 
     <RelativeLayout

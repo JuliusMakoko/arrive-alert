@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MapActivity" >
+
+    <fragment
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.MapFragment"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:padding="4dp"
+            android:background="#80000000" >
+
+            <EditText
+                android:id="@+id/editText2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/button1"
+                android:layout_alignParentLeft="true"
+                android:layout_toStartOf="@id/button1"
+                android:hint="@string/geocode_hint"
+                android:inputType="textPostalAddress"
+                android:textColorHint="@android:color/darker_gray" >
+
+                <requestFocus />
+            </EditText>
+
+            <Button
+                android:id="@+id/button1"
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:background="@drawable/button_rectangle_rounded"
+                android:onClick="go"
+                android:text="@string/go_button" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|right|top"
+            android:layout_marginRight="5dp"
+            android:layout_marginTop="55dp"
+            android:background="#80000000"
+            android:orientation="horizontal"
+            android:padding="4dp" >
+
+            <TextView
+                android:id="@+id/textView1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/imageButton1"
+                android:layout_centerHorizontal="true"
+                android:text="Geofence Size"
+                android:textColor="@color/light_gray" />
+
+            <ImageButton
+                android:id="@+id/imageButton1"
+                android:layout_width="45dp"
+                android:layout_height="40dp"
+                android:onClick="shrink"
+                android:src="@drawable/ic_action_previous_item" />
+
+            <ImageButton
+                android:id="@+id/imageButton2"
+                android:layout_width="45dp"
+                android:layout_height="40dp"
+                android:layout_toRightOf="@id/imageButton1"
+                android:onClick="grow"
+                android:src="@drawable/ic_action_next_item" />
+
+        </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom"
+        android:background="#80000000"
+        android:padding="4dp"
+        android:gravity="center_vertical" >
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:contentDescription="@string/name_description"
+            android:text="@string/name_label"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="@color/light_gray" />
+
+        <EditText
+            android:id="@+id/editText1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ems="10"
+            android:hint="@string/location_name_hint"
+            android:inputType="textPersonName"
+            android:maxLength="25"
+            android:textColorHint="@android:color/darker_gray" />
+
+        <Button
+            android:id="@+id/button2"
+            android:layout_width="100dp"
+            android:layout_height="38dp"
+            android:background="@drawable/button_rectangle_rounded"
+            android:gravity="center_horizontal|center_vertical"
+            android:onClick="buttonHandler"
+            android:text="@string/this_location_button" />
+
+    </LinearLayout>
+
+</FrameLayout>

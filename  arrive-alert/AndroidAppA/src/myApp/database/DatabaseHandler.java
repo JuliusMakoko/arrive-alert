@@ -287,12 +287,12 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 	
 
 	/**
-	 * Getting all locations
+	 * Getting all locations (sorted by name)
 	 * */
 	public ArrayList<LocationListItem> getAllLocations() {
 		ArrayList<LocationListItem> locationList = new ArrayList<LocationListItem>();
 		// Select All Query
-		String selectQuery = "SELECT  * FROM " + TABLE_LOCATIONS;
+		String selectQuery = "SELECT  * FROM " + TABLE_LOCATIONS + " ORDER BY " + KEY_NAME;
 
 		SQLiteDatabase db = this.getWritableDatabase();
 		Cursor cursor = db.rawQuery(selectQuery, null);
@@ -340,7 +340,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
 		// updating row
 		return db.update(TABLE_LOCATIONS, values, KEY_LOCATION_ID + " = ?",
-				new String[] {"" + location.getLocationId() });
+				new String[] { String.valueOf(location.getLocationId()) });
 	}
 
 	/**
