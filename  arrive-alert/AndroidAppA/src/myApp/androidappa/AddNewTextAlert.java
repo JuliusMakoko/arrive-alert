@@ -9,10 +9,14 @@
 
 package myApp.androidappa;
 
+import java.util.ArrayList;
+
 import myApp.database.DatabaseHandler;
 import myApp.list.AlertListItem;
 import myApp.location.EditLocationActivity;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -197,7 +201,6 @@ public class AddNewTextAlert extends Activity {
 
 		// if a location by that name doesn't exist -- then return false
 		if (db.locationExists(loc) == false) {
-			//location.setBackgroundColor(Color.parseColor("#FF3300"));
 			Toast.makeText(
 					AddNewTextAlert.this,
 					"Couldn't find a location by that name."
@@ -208,25 +211,21 @@ public class AddNewTextAlert extends Activity {
 
 		// Validate input
 		if (checkEmpty(name)) { // Ensure name is NOT empty
-			//alertName.setBackgroundColor(Color.parseColor("#FF3300"));
 			Toast.makeText(AddNewTextAlert.this, "Give your alert a name!",
 					Toast.LENGTH_LONG).show();
 			return false;
 		} else if (checkEmpty(phone)) { // Ensure phone # is NOT empty
-			//phoneAdd.setBackgroundColor(Color.parseColor("#FF3300"));
 			Toast.makeText(AddNewTextAlert.this,
 					"You forgot to enter a phone number", Toast.LENGTH_LONG)
 					.show();
 			return false;
 		} else if (!checkPhone(phone)) { // Ensure phone # passes validation
-			//phoneAdd.setBackgroundColor(Color.parseColor("#FF3300"));
 			Toast.makeText(
 					AddNewTextAlert.this,
 					"Phone number must contain only numbers, dashes or parentheses "
 							+ phone, Toast.LENGTH_LONG).show();
 			return false;
 		} else if (checkEmpty(text)) { // Ensure message is NOT empty
-			//message.setBackgroundColor(Color.parseColor("#FF3300"));
 			Toast.makeText(AddNewTextAlert.this,
 					"You need to enter a message to send to " + phone,
 					Toast.LENGTH_LONG).show();
@@ -241,8 +240,7 @@ public class AddNewTextAlert extends Activity {
 		return s.equals("");
 	}
 
-	// Checks if the given string consists solely of numbers, '-', '(', ')' or
-	// ' '
+	// Checks if the given string consists solely of numbers, '-', '(', ')' or ' '
 	private boolean checkPhone(String s) {
 		char[] phone = s.toCharArray();
 		char[] check = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-',
@@ -288,6 +286,7 @@ public class AddNewTextAlert extends Activity {
 				// i.e. let user pick between them
 				Cursor cursor = null;
 				String phone = "";
+				ArrayList<String> phoneList = new ArrayList<String>();
 				try {
 
 					Uri result = data.getData();
@@ -304,21 +303,18 @@ public class AddNewTextAlert extends Activity {
 
 					int phoneInd = cursor.getColumnIndex(Phone.DATA);
 
-					// let's just get the first text
 					if (cursor.moveToFirst()) {
 						phone = cursor.getString(phoneInd);
-						Log.v(Constants.DEBUG_TAG, "Got phone: " + phone);
+						phoneList.add(phone);
 
-						// iterate through additional phone numbers
+						// iterate through phone numbers
 						while (cursor.moveToNext()) {
-							Log.v(Constants.DEBUG_TAG, "Also found phone: "
-									+ cursor.getString(phoneInd));
+							phone = cursor.getString(phoneInd);
+							if(!phoneList.contains(phone)) // don't add duplicates
+								phoneList.add(phone);
 						}
 
 					} else {
-						// Toast.makeText(AddNewTextAlert.this,
-						// "No phone found for contact.",
-						// Toast.LENGTH_LONG).show();
 						Log.w(Constants.DEBUG_TAG, "No results");
 					}
 				} catch (Exception e) {
@@ -328,15 +324,31 @@ public class AddNewTextAlert extends Activity {
 						cursor.close();
 					}
 
-					EditText phoneEntry = (EditText) findViewById(R.id.editTextPhone);
-					phoneEntry.setText(phone);
+					final EditText phoneEntry = (EditText) findViewById(R.id.editTextPhone);
+					
+					if(phoneList.size() > 1) {
+						final CharSequence[] items = phoneList.toArray(new String[phoneList.size()]);
+		                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		                builder.setTitle("Choose a number");
+		                builder.setItems(items, new DialogInterface.OnClickListener() {
+		                    public void onClick(DialogInterface dialog, int item) {
+		                        String selectedNumber = items[item].toString();
+		                        phoneEntry.setText(selectedNumber);
+		                    }
+		                });
+		                AlertDialog alert = builder.create();
+		                alert.show();
+		               
+					} else if (phone.length() > 0) {
+	                    //phone = phone.replace("-", "");
+	                    phoneEntry.setText(phone);
+					}
 
 					if (phone.length() == 0) {
 						Toast.makeText(this,
 								"No phone number found for contact.",
 								Toast.LENGTH_LONG).show();
 					}
-
 				}
 
 			} else if (requestCode == Constants.LOCATION_PICKER_RESULT) {

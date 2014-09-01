@@ -1,8 +1,11 @@
 package myApp.geofence;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationClient;
 
+import android.app.Dialog;
 import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -14,15 +17,19 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.telephony.SmsManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import myApp.androidappa.Constants;
 import myApp.androidappa.MainActivity;
 import myApp.androidappa.R;
+import myApp.androidappa.MainActivity.ErrorDialogFragment;
 import myApp.database.DatabaseHandler;
 import myApp.list.AlertListItem;
+import myApp.settings.SettingsPreferences;
 
 /**
  * This class receives geofence transition events from Location Services, in the
@@ -31,7 +38,10 @@ import myApp.list.AlertListItem;
  */
 public class ReceiveTransitionsIntentService extends IntentService {
 
+	private SettingsPreferences settingsPrefs;
 	private DatabaseHandler db;
+	// Remove geofences handler
+	private GeofenceRemover mGeofenceRemover;
     /**
      * Sets an identifier for this class' background thread
      */
@@ -133,8 +143,18 @@ public class ReceiveTransitionsIntentService extends IntentService {
                 		// not supposed to happen
                 }
                 
-                if(alert != null)
+                if(alert != null) {
+                	settingsPrefs = new SettingsPreferences(this);
+                	if(settingsPrefs.getSettings().equals(Constants.SETTINGS_ONCE)) {
+                		// unregister geofence if SETTINGS_ONCE is set
+                		alert.setActive(false);
+                		db.updateAlert(alert);
+                		unregisterGeofence( String.valueOf(alert.getLocation()) );
+                	}
+                	
+                	// send notification
                 	sendNotification(transitionType, ids, alert);
+                }
 
                 // Log the transition type and a message
                 Log.d(GeofenceUtils.APPTAG,
@@ -166,6 +186,7 @@ public class ReceiveTransitionsIntentService extends IntentService {
         Intent notificationIntent =
                 new Intent(getApplicationContext(),MainActivity.class);
 
+        notificationIntent.putExtra(Constants.ALERT_NAME, alert.getTitle());
         // Construct a task stack
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
 
@@ -242,6 +263,68 @@ public class ReceiveTransitionsIntentService extends IntentService {
         else
             smsManager.sendTextMessage(phoneNumber, null, message, piSent, piDelivered);
       }
+    
+    public void unregisterGeofence(String fenceId) {
+		// Create a List of 1 Geofence with the ID {location} and store it in
+		// the global list
+    	// Store the list of geofences to remove
+    	List<String> mGeofenceIdsToRemove;
+		mGeofenceIdsToRemove = Collections.singletonList(fenceId);
+		
+		// Store the current type of removal
+		myApp.geofence.GeofenceUtils.REMOVE_TYPE mRemoveType;
+
+		mRemoveType = GeofenceUtils.REMOVE_TYPE.LIST;
+
+		if (!servicesConnected()) {
+			return;
+		}
+
+		// Try to remove the geofence
+		try {
+			// Instantiate a Geofence remover
+			mGeofenceRemover = new GeofenceRemover(this);
+			mGeofenceRemover.removeGeofencesById(mGeofenceIdsToRemove);
+
+			// Catch errors with the provided geofence IDs
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (UnsupportedOperationException e) {
+			// Notify user that previous request hasn't finished.
+			Toast.makeText(this,
+					R.string.remove_geofences_already_requested_error,
+					Toast.LENGTH_LONG).show();
+		}
+	}
+    
+    /**
+	 * Verify that Google Play services is available before making a request.
+	 * 
+	 * @return true if Google Play services is available, otherwise false
+	 */
+	private boolean servicesConnected() {
+
+		// Check that Google Play services is available
+		int resultCode = GooglePlayServicesUtil
+				.isGooglePlayServicesAvailable(this);
+
+		// If Google Play services is available
+		if (ConnectionResult.SUCCESS == resultCode) {
+
+			// In debug mode, log the status
+			Log.d(GeofenceUtils.APPTAG,
+					getString(R.string.play_services_available));
+
+			// Continue
+			return true;
+
+			// Google Play services was not available for some reason
+		} else {
+
+			// error
+			return false;
+		}
+	}
     
 }
 
