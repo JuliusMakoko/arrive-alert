@@ -1,0 +1,1 @@
+Arrive alert is an app that uses geofencing to allow users to notify others where they are.
